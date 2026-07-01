@@ -1,0 +1,14 @@
+body {
+  font-family: 'Inter', sans-serif;
+}
+.navlink {
+  border-radius: 0.75rem;
+  padding: 0.4rem 0.8rem;
+}
+.navlink:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.navlink.active {
+  background-color: #0a0a0a;
+  color: #fff;
+}
