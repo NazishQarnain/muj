@@ -1,0 +1,49 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "chats": {
+      "$room": {
+        ".read": "auth != null",
+        "messages": {
+          ".write": "auth != null",
+          "$msgId": {
+            ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)"
+          }
+        },
+        "announcements": {
+          ".write": "auth != null",
+          ".read": "auth != null"
+        },
+        "polls": {
+          ".write": "auth != null",
+          ".read": "auth != null"
+        },
+        "online": {
+          "$uid": {
+            ".read": "auth != null",
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        },
+        "pinnedMessage": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      }
+    },
+    "resources": {
+      "$courseKey": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "lostandfound": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
