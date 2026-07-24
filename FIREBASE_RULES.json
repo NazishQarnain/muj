@@ -1,27 +1,58 @@
 {
   "rules": {
+    "admins": {
+      ".read": "auth != null",
+      ".write": false
+    },
     "users": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid == $uid",
+        "displayName": { ".read": true },
+        "photoURL": { ".read": true },
+        "program": { ".read": true },
+        "course": { ".read": true },
+        "batch": { ".read": true },
+        "rollCode": { ".read": true },
+        "banned": {
+          ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+        }
+      }
+    },
+    "dmIndex": {
       "$uid": {
         ".read": "auth != null && auth.uid == $uid",
-        ".write": "auth != null && auth.uid == $uid"
+        "$roomKey": {
+          ".write": "auth != null && $roomKey.contains(auth.uid)"
+        }
       }
     },
     "chats": {
       "$room": {
         ".read": "auth != null",
         "messages": {
-          ".write": "auth != null",
-          "$msgId": {
-            ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)"
-          }
+          ".write": "auth != null"
         },
         "announcements": {
-          ".write": "auth != null",
-          ".read": "auth != null"
+          ".read": "auth != null",
+          ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
+          ".indexOn": "timestamp"
         },
         "polls": {
-          ".write": "auth != null",
-          ".read": "auth != null"
+          ".indexOn": "timestamp",
+          "$pollId": {
+            ".read": "auth != null",
+            ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
+            "options": {
+              "$optKey": {
+                "votes": {
+                  "$uid": {
+                    ".write": "auth != null && auth.uid == $uid"
+                  }
+                }
+              }
+            }
+          }
         },
         "online": {
           "$uid": {
@@ -31,19 +62,166 @@
         },
         "pinnedMessage": {
           ".read": "auth != null",
-          ".write": "auth != null"
+          ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+        },
+        "files": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".indexOn": "timestamp"
+        }
+      }
+    },
+    "roomIndex": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "dms": {
+      "$room": {
+        ".read": "auth != null && ($room.contains(auth.uid))",
+        ".write": "auth != null && ($room.contains(auth.uid))"
+      }
+    },
+    "followers": {
+      "$uid": {
+        ".read": true,
+        "$followerUid": {
+          ".write": "auth != null && auth.uid == $followerUid"
+        }
+      }
+    },
+    "following": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "blocks": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "hates": {
+      "$targetUid": {
+        "$haterUid": {
+          ".read": "auth != null && auth.uid == $haterUid",
+          ".write": "auth != null && auth.uid == $haterUid && auth.uid != $targetUid"
+        }
+      }
+    },
+    "hateCounts": {
+      "$targetUid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "academicEvents": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+      }
+    },
+    "complaints": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).exists()",
+      "$id": {
+        ".write": "auth != null && (!data.exists() || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "jobPostings": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && (!data.exists() || data.child('postedByUid').val() == auth.uid || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "placementStats": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists()"
+      }
+    },
+    "facultyCabins": {
+      "$key": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "giveaway": {
+      "$uid": {
+        ".read": "auth != null && auth.uid == $uid",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "posts": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid"
+      }
+    },
+    "stories": {
+      ".read": "auth != null",
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid == $uid",
+        "$storyId": {
+          "views": {
+            "$viewerUid": {
+              ".write": "auth != null && auth.uid == $viewerUid"
+            }
+          },
+          "reactions": {
+            "$viewerUid": {
+              ".write": "auth != null && auth.uid == $viewerUid"
+            }
+          }
         }
       }
     },
     "resources": {
       "$courseKey": {
         ".read": "auth != null",
-        ".write": "auth != null"
+        ".indexOn": "timestamp",
+        "$itemId": {
+          ".write": "auth != null && (!data.exists() || data.child('uid').val() == auth.uid || root.child('admins').child(auth.uid).exists())"
+        }
       }
     },
     "lostandfound": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".indexOn": "timestamp",
+      "$itemId": {
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() == auth.uid || root.child('admins').child(auth.uid).exists() || data.child('timestamp').val() < (now - 604800000))"
+      }
+    },
+    "marketplace": {
+      ".read": "auth != null",
+      ".indexOn": "timestamp",
+      "$itemId": {
+        ".write": "auth != null && (!data.exists() || data.child('uid').val() == auth.uid || root.child('admins').child(auth.uid).exists() || data.child('timestamp').val() < (now - 604800000))"
+      }
+    },
+    "exams": {
+      "$room": {
+        ".read": "auth != null",
+        ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
+        ".indexOn": "date"
+      }
+    },
+    "confessions": {
+      ".read": "auth != null",
+      ".indexOn": "timestamp",
+      "$id": {
+        ".write": "auth != null && (!data.exists() || root.child('admins').child(auth.uid).exists() || data.child('timestamp').val() < (now - 604800000))",
+        "likes": {
+          "$uid": {
+            ".write": "auth != null && auth.uid == $uid"
+          }
+        }
+      }
+    },
+    "rollIndex": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".indexOn": ".value"
     }
   }
 }
